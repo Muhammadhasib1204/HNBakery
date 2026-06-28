@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - HN Bakery</title>
+    <link href="https://fonts.googleapis.com/css2?family=Italianno&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="dashboard-body">
+
+    <aside class="sidebar">
+        <div class="logo-container">
+            <h1>HN Bakery</h1>
+        </div>
+        
+        <nav class="menu-container">
+            <div class="menu-category">Home</div>
+            <a href="/" class="menu-item active">
+                <i class="fa-solid fa-house"></i> Beranda
+            </a>
+
+            <div class="menu-category">Data</div>
+            <a href="/data_produk" class="menu-item">
+                <i class="fa-solid fa-bread-slice"></i> Data Produk
+            </a>
+            <a href="/data_penjualan" class="menu-item">
+                <i class="fa-solid fa-cart-shopping"></i> Data Penjualan
+            </a>
+
+            <div class="menu-category">Analisis</div>
+            <a href="/analisis" class="menu-item">
+                <i class="fa-solid fa-chart-line"></i> Analisis Prediksi
+            </a>
+
+
+            <div class="menu-category">Logout</div>
+            <a href="/logout" class="menu-item logout-btn">
+                <i class="fa-solid fa-right-from-bracket"></i> Logout
+            </a>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        
+        <header class="topbar">
+            <div class="user-profile">
+                <span>Hi, {{ session.username }}</span>
+                <div class="avatar">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+            </div>
+        </header>
+
+        <div class="content-area">
+            <div class="welcome-header">
+                <h2>Welcome to Prediksi Penjualan HN Bakery Website!</h2>
+                <p>Selamat Datang Admin!</p>
+            </div>
+
+            <div class="dashboard-box">
+                <div class="card-container">
+                    
+                    <div class="card">
+                        <div class="card-icon">
+                            <i class="fa-solid fa-chart-pie"></i>
+                        </div>
+                        <div class="card-info">
+                            <div class="card-title">Data Penjualan Roti</div>
+                            <div class="card-value">{{ total_penjualan }} Transaksi</div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-icon">
+                            <i class="fa-solid fa-boxes-stacked"></i>
+                        </div>
+                        <div class="card-info">
+                            <div class="card-title">Data Roti</div>
+                            <div class="card-value">{{ total_roti }} Varian</div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+</body>
+</html>

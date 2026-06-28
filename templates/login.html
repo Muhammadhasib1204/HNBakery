@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - HN Bakery</title>
+    <link href="https://fonts.googleapis.com/css2?family=Italianno&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="login-body">
+
+    <div class="left-panel">
+        <img src="https://cdn-icons-png.flaticon.com/512/3014/3014502.png" alt="Roti Icon">
+        <h2>Selamat Datang Di Website HN Bakery</h2>
+        <p>Pada toko HN Bakery Menyediakan Berbagai macam roti</p>
+    </div>
+
+    <div class="right-panel">
+        <h1 class="logo-title">HN Bakery</h1>
+        <p class="welcome-text">Welcome to HN Bakery Website</p>
+
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <div class="error-msg">{{ messages[0] }}</div>
+          {% endif %}
+        {% endwith %}
+
+        <form class="login-form" action="/login" method="POST">
+            <div class="input-group">
+                <label for="username">Username :</label>
+                <input type="text" id="username" name="username" required autocomplete="off">
+            </div>
+
+            <div class="input-group">
+                <label for="password">Password :</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+
+            <button type="submit" class="btn-login">Login</button>
+        </form>
+    </div>
+
+</body>
+</html>

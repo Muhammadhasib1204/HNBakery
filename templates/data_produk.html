@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Produk - HN Bakery</title>
+    <link href="https://fonts.googleapis.com/css2?family=Italianno&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="dashboard-body">
+
+    <aside class="sidebar">
+        <div class="logo-container">
+            <h1>HN Bakery</h1>
+        </div>
+        <nav class="menu-container">
+            <div class="menu-category">Home</div>
+            <a href="/" class="menu-item">
+                <i class="fa-solid fa-house"></i> Beranda
+            </a>
+
+            <div class="menu-category">Data</div>
+            <a href="/data_produk" class="menu-item active">
+                <i class="fa-solid fa-bread-slice"></i> Data Produk
+            </a>
+            <a href="/data_penjualan" class="menu-item">
+                <i class="fa-solid fa-cart-shopping"></i> Data Penjualan
+            </a>
+
+            <div class="menu-category">Analisis</div>
+            <a href="/analisis" class="menu-item">
+                <i class="fa-solid fa-chart-line"></i> Analisis Prediksi
+            </a>
+
+            <div class="menu-category">Logout</div>
+            <a href="/logout" class="menu-item logout-btn">
+                <i class="fa-solid fa-right-from-bracket"></i> Logout
+            </a>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <header class="topbar">
+            <div class="user-profile">
+                <span>Hi, {{ session.username }}</span>
+                <div class="avatar"><i class="fa-solid fa-user"></i></div>
+            </div>
+        </header>
+
+        <div class="content-area">
+            <div class="welcome-header">
+                <h2>Data Produk Roti</h2>
+                <p>Kelola varian produk dan stok roti HN Bakery</p>
+            </div>
+
+            {% with messages = get_flashed_messages() %}
+              {% if messages %}
+                {% for message in messages %}
+                  <div style="padding: 10px; background-color: #d4edda; color: #155724; border-radius: 5px; margin-bottom: 15px;">
+                    {{ message }}
+                  </div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+
+            <div class="table-container">
+                <button onclick="bukaModal()" class="btn-add" style="border:none; cursor:pointer;">
+                    <i class="fa-solid fa-plus"></i> Tambah Data
+                </button>
+
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>No.</th>
+                            <th>Nama Roti</th>
+                            <th>Kategori</th>
+                            <th>Harga</th>
+                            <th>Stok Tersedia</th> <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in produk %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>{{ item.nama_roti }}</td>
+                            <td>{{ item.kategori }}</td>
+                            <td>Rp {{ "{:,.0f}".format(item.harga).replace(',', '.') }}</td>
+                            <td>
+                                {% if item.stok < 10 %}
+                                    <span style="font-weight: 600; color: #e74c3c;">{{ item.stok }} pcs</span>
+                                {% else %}
+                                    <span style="font-weight: 600; color: #2ecc71;">{{ item.stok }} pcs</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <button class="btn-edit" onclick="bukaModalEdit('{{ item.id }}', '{{ item.nama_roti }}', '{{ item.kategori }}', '{{ item.harga }}', '{{ item.stok }}')">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </button>
+                                
+                                <a href="/hapus_produk/{{ item.id }}" class="btn-delete" style="display:inline-block; text-decoration:none;" onclick="return confirm('Apakah Anda yakin ingin menghapus produk {{ item.nama_roti }}?');">
+                                    <i class="fa-solid fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" style="text-align: center;">Belum ada data roti di database.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <div id="modalTambah" class="modal-bg">
+        <div class="modal-content">
+            <span class="close-btn" onclick="tutupModal()">&times;</span>
+            <h3 style="margin-bottom: 20px; color:#1ABC9C;">Tambah Produk Roti</h3>
+            
+            <form action="/tambah_produk" method="POST">
+                <div class="input-group">
+                    <label>Nama Roti :</label>
+                    <input type="text" name="nama_roti" placeholder="Contoh: Roti Keju" required>
+                </div>
+                <div class="input-group">
+                    <label>Kategori :</label>
+                    <select name="kategori" required style="width: 100%; padding: 10px; border: none; border-bottom: 2px solid #ccc; outline: none; background: transparent; font-family: 'Poppins';">
+                        <option value="Manis">Manis</option>
+                        <option value="Asin">Asin</option>
+                        <option value="Tawar">Tawar</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Harga (Rp) :</label>
+                    <input type="number" name="harga" placeholder="Contoh: 7500" required>
+                </div>
+                <div class="input-group">
+                    <label>Stok Awal :</label>
+                    <input type="number" name="stok" placeholder="Jumlah stok saat ini" required>
+                </div>
+                <button type="submit" class="btn-login" style="width: 100%;">Simpan Data</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="modalEdit" class="modal-bg">
+        <div class="modal-content">
+            <span class="close-btn" onclick="tutupModalEdit()">&times;</span>
+            <h3 style="margin-bottom: 20px; color:#f39c12;">Edit Produk Roti</h3>
+            
+            <form id="formEdit" action="" method="POST">
+                <div class="input-group">
+                    <label>Nama Roti :</label>
+                    <input type="text" id="edit_nama" name="nama_roti" required>
+                </div>
+                <div class="input-group">
+                    <label>Kategori :</label>
+                    <select id="edit_kategori" name="kategori" required style="width: 100%; padding: 10px; border: none; border-bottom: 2px solid #ccc; outline: none; background: transparent; font-family: 'Poppins';">
+                        <option value="Manis">Manis</option>
+                        <option value="Asin">Asin</option>
+                        <option value="Tawar">Tawar</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Harga (Rp) :</label>
+                    <input type="number" id="edit_harga" name="harga" required>
+                </div>
+                <div class="input-group">
+                    <label>Update Stok :</label>
+                    <input type="number" id="edit_stok" name="stok" required>
+                </div>
+                <button type="submit" class="btn-login" style="width: 100%; background-color:#f39c12;">Update Data</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Modal Tambah
+        function bukaModal() {
+            document.getElementById("modalTambah").style.display = "flex";
+        }
+        function tutupModal() {
+            document.getElementById("modalTambah").style.display = "none";
+        }
+
+        // Modal Edit
+        function bukaModalEdit(id, nama, kategori, harga, stok) {
+            document.getElementById('formEdit').action = '/edit_produk/' + id;
+            document.getElementById('edit_nama').value = nama;
+            document.getElementById('edit_kategori').value = kategori;
+            document.getElementById('edit_harga').value = harga;
+            document.getElementById('edit_stok').value = stok; // Set nilai stok ke input
+            
+            document.getElementById('modalEdit').style.display = 'flex';
+        }
+
+        function tutupModalEdit() {
+            document.getElementById('modalEdit').style.display = 'none';
+        }
+
+        // Menutup modal jika user klik di luar kotak modal
+        window.onclick = function(event) {
+            if (event.target == document.getElementById("modalTambah")) {
+                tutupModal();
+            }
+            if (event.target == document.getElementById("modalEdit")) {
+                tutupModalEdit();
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analisis Prediksi - HN Bakery</title>
+    <link href="https://fonts.googleapis.com/css2?family=Italianno&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        .badge-status { padding: 6px 12px; border-radius: 5px; font-size: 16px; font-weight: bold; color: white; }
+        .bg-tinggi { background-color: #2ecc71; }
+        .bg-sedang { background-color: #f39c12; }
+        .bg-rendah { background-color: #e74c3c; }
+
+        .filter-bar {
+            background-color: #f9f9f9; padding: 20px; border-radius: 15px; display: flex; gap: 15px; 
+            align-items: center; margin-bottom: 25px; border: 1px solid #cccccc; flex-wrap: wrap; 
+        }
+        .filter-group { flex: 1; display: flex; flex-direction: column; min-width: 150px; }
+        .filter-group label { font-size: 18px; color: #000000; margin-bottom: 8px; font-weight: 600; }
+        .filter-input { 
+            padding: 12px; font-size: 18px; color: #000000; border-radius: 8px; 
+            border: 1px solid #ccc; outline: none; font-family: 'Poppins', sans-serif; 
+        }
+        .filter-input:focus { border-color: #000000; }
+        
+        .btn-analyze { 
+            background-color: #000000; color: white; border: none; padding: 12px 25px; 
+            border-radius: 8px; font-size: 18px; font-weight: 600; cursor: pointer; 
+            transition: 0.3s; height: auto; margin-top: 32px; 
+        }
+        .btn-analyze:hover { background-color: #333333; }
+        
+        .btn-pdf {
+            background-color: #e74c3c; color: white; border: none; padding: 12px 25px;
+            border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;
+            transition: 0.3s; margin-bottom: 20px; display: inline-flex; align-items: center; gap: 10px;
+        }
+        .btn-pdf:hover { background-color: #c0392b; }
+
+        .prediction-box { background-color: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 25px; }
+        .calculation-box { border: 2px solid #222; background-color: #fff; padding: 25px; border-radius: 15px; margin-bottom: 25px; }
+        .bottom-layout { display: flex; gap: 25px; }
+        .chart-box, .insight-box { flex: 1; background-color: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); min-height: 300px; }
+        .box-title { font-size: 24px; font-weight: 700; color: #000000; margin-bottom: 15px; border-bottom: 2px solid #cccccc; padding-bottom: 10px; }
+        .placeholder-text { color: #555555; text-align: center; padding: 50px 0; font-style: italic; font-size: 18px; }
+        .formula-box { background: #f4f4f4; padding: 15px; border-radius: 8px; font-family: 'Courier New', Courier, monospace; font-size: 16px; margin-bottom: 20px; border-left: 5px solid #222; }
+        .tab-nav { display: flex; gap: 5px; margin-bottom: 15px; }
+        .tab-btn { padding: 10px 20px; cursor: pointer; border: 1px solid #ccc; background: #f1f1f1; font-family: 'Poppins', sans-serif; font-weight: 600; border-radius: 8px 8px 0 0; transition: 0.3s; }
+        .tab-btn.active { background: #000; color: #fff; border-color: #000; }
+        .table-wrapper { max-height: 400px; overflow-y: auto; border: 1px solid #ddd; }
+
+        @media print { .badge-status { print-color-adjust: exact; -webkit-print-color-adjust: exact; } }
+    </style>
+</head>
+<body class="dashboard-body">
+    <aside class="sidebar">
+        <div class="logo-container"><h1>HN Bakery</h1></div>
+            <nav class="menu-container">
+                <div class="menu-category">Home</div>
+                    <a href="/" class="menu-item"><i class="fa-solid fa-house"></i> Beranda</a>
+                <div class="menu-category">Data</div>
+                    <a href="/data_produk" class="menu-item"><i class="fa-solid fa-bread-slice"></i> Data Produk</a>
+                    <a href="/data_penjualan" class="menu-item"><i class="fa-solid fa-cart-shopping"></i> Data Penjualan</a>
+                <div class="menu-category">Analisis</div>
+                    <a href="/analisis" class="menu-item active"><i class="fa-solid fa-chart-line"></i> Analisis Prediksi</a>
+                    <a href="javascript:void(0)" onclick="togglePerhitungan()" class="menu-item" style="background-color: rgba(0,0,0,0.1);">
+                        <i class="fa-solid fa-calculator"></i> Proses Hitung
+                    </a>
+                <div class="menu-category">Logout</div>
+                    <a href="/logout" class="menu-item logout-btn"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+            </nav>
+    </aside>
+    <main class="main-content">
+        <header class="topbar">
+            <div class="user-profile">
+                <span>Hi, {{ session.username }}</span>
+                <div class="avatar"><i class="fa-solid fa-user"></i></div>
+            </div>
+        </header>
+        <div class="content-area">
+            <div class="welcome-header">
+                <h2>Analisis Prediksi Penjualan</h2>
+                <p>Output berdasarkan kerangka Analisis Faktor Dominan, Validasi Model, dan Proyeksi 2026.</p>
+            </div>
+            
+            <form action="/analisis" method="POST" class="filter-bar">
+                <div class="filter-group">
+                    <label>Pilih Produk Roti</label>
+                    <select name="jenis_roti" class="filter-input" required>
+                        <option value="" disabled selected>-- Pilih Roti --</option>
+                        {% for roti in roti_list %}
+                            <option value="{{ roti.nama_roti }}">{{ roti.nama_roti }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>Waktu Analisis</label>
+                    <select name="resolusi_waktu" id="resolusiWaktu" class="filter-input" onchange="toggleDateInputs()" required>
+                        <option value="W" selected>Mingguan</option>
+                        <option value="D">Harian</option>
+                    </select>
+                </div>
+
+                <div id="date-inputs" style="display: none; gap: 15px; flex: 2;">
+                    <div class="filter-group">
+                        <label>Target Awal Prediksi</label>
+                        <input type="date" name="start_date" id="startDate" class="filter-input">
+                    </div>
+                    <div class="filter-group">
+                        <label>Target Akhir Prediksi</label>
+                        <input type="date" name="end_date" id="endDate" class="filter-input">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-analyze"><i class="fa-solid fa-bolt"></i> Proses Prediksi</button>
+            </form>
+
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <div style="background-color: #e74c3c; color: white; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        {{ messages[0] }}
+                    </div>
+                {% endif %}
+            {% endwith %}
+            
+            {% if hasil %}
+                <button onclick="generatePDF()" class="btn-pdf">
+                    <i class="fa-solid fa-file-pdf"></i> Cetak Laporan PDF
+                </button>
+
+                <div id="area-cetak" style="background-color: white; padding: 10px;">
+                    <div id="box-perhitungan" class="calculation-box" style="display: none;">
+                        <h3 class="box-title"><i class="fa-solid fa-gears"></i> Transparansi Algoritma & Validasi</h3>
+                        <div class="tab-nav">
+                            <div class="tab-btn active" onclick="switchTab('tab-iterasi', this)">1. Log GBDT (150 Iterasi)</div>
+                            <div class="tab-btn" onclick="switchTab('tab-mae', this)">2. Rincian MAE</div>
+                            <div class="tab-btn" onclick="switchTab('tab-fitur', this)">3. Bobot Variabel</div>
+                        </div>
+
+                        <div id="tab-iterasi" class="tab-content">
+                            <div class="formula-box"><strong>Rumus:</strong> F<sub>m</sub>(x) = F<sub>m-1</sub>(x) + 0.05 &sdot; h<sub>m</sub>(x)</div>
+                            <div class="table-wrapper">
+                                <table class="data-table" style="width: 100%; border-collapse: collapse; text-align: center;">
+                                    <thead style="background-color: #222; color: #fff; position: sticky; top: 0;">
+                                        <tr>
+                                            <th style="padding: 12px;">M</th>
+                                            <th style="padding: 12px;">F<sub>m-1</sub></th>
+                                            <th style="padding: 12px;">Residual</th>
+                                            <th style="padding: 12px;">h<sub>m</sub> (Tree)</th>
+                                            <th style="padding: 12px;">F<sub>m</sub> (Baru)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for log in log_perhitungan %}
+                                        <tr style="border-bottom: 1px solid #ddd;">
+                                            <td style="padding: 10px; font-weight: bold;">{{ log.iterasi }}</td>
+                                            <td style="padding: 10px;">{{ log.f_awal }}</td>
+                                            <td style="padding: 10px; color: #e74c3c;">{{ log.residual }}</td>
+                                            <td style="padding: 10px; color: #3498db;">{{ log.h_m }}</td>
+                                            <td style="padding: 10px; font-weight: bold;">{{ log.f_akhir }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div id="tab-mae" class="tab-content" style="display:none;">
+                            <div class="formula-box"><strong>MAE:</strong> &Sigma; |Aktual - Prediksi| / n = <strong>{{ "{:.2f}".format(mae) }}</strong></div>
+                            <div class="table-wrapper">
+                                <table class="data-table" style="width: 100%; border-collapse: collapse; text-align: center;">
+                                    <thead style="background-color: #222; color: #fff; position: sticky; top: 0;">
+                                        <tr>
+                                            <th style="padding: 12px;">Tanggal</th>
+                                            <th style="padding: 12px;">Aktual</th>
+                                            <th style="padding: 12px;">Prediksi</th>
+                                            <th style="padding: 12px;">Error Absolut</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for d in detail_mae %}
+                                        <tr style="border-bottom: 1px solid #ddd;">
+                                            <td style="padding: 10px;">{{ d.tanggal }}</td>
+                                            <td style="padding: 10px; font-weight: bold;">{{ d.aktual }}</td>
+                                            <td style="padding: 10px; font-weight: bold;">{{ d.prediksi }}</td>
+                                            <td style="padding: 10px; color: red;">{{ d.error }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div id="tab-fitur" class="tab-content" style="display:none;">
+                            <table class="data-table" style="width: 100%; border-collapse: collapse; text-align: center; margin-top: 10px;">
+                                <thead style="background-color: #222; color: #fff;">
+                                    <tr>
+                                        <th style="padding: 12px;">Peringkat</th>
+                                        <th style="padding: 12px;">Nama Fitur</th>
+                                        <th style="padding: 12px;">Importance Score</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for imp in importance %}
+                                    <tr style="border-bottom: 1px solid #ddd;">
+                                        <td style="padding: 12px;">{{ loop.index }}</td>
+                                        <td style="padding: 12px; font-weight: 600;">{{ imp.fitur }}</td>
+                                        <td style="padding: 12px;">{{ "{:.4f}".format(imp.score) }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="prediction-box">
+                        <h3 class="box-title"><i class="fa-solid fa-chart-line"></i> Grafik Pembelajaran (Validasi) & Proyeksi Target</h3>
+                        <img src="data:image/png;base64,{{ plot_trend_url }}" style="width: 100%; border-radius: 10px;">
+                    </div>
+                    
+                    <div class="prediction-box">
+                        <h3 class="box-title"><i class="fa-solid fa-table"></i> Laporan Backtesting & Proyeksi: <span style="color:#222;">{{ roti_pilihan }}</span></h3>
+                        <div style="margin-bottom: 15px; font-weight: 600; font-size: 18px;">
+                            Evaluasi Tingkat Error GBDT (MAE): <span style="color: #e74c3c;">{{ "{:.2f}".format(mae) }} Roti/Periode</span>
+                        </div>
+                        <div class="table-wrapper" id="tabel-prediksi-wrapper" style="max-height: 400px; overflow-y: auto;">
+                            <table class="data-table" style="width: 100%; text-align: left; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="background-color: #f8f9fa; border-bottom: 2px solid #ddd; position: sticky; top: 0;">
+                                        <th style="padding: 12px;">Periode Waktu</th>
+                                        <th style="padding: 12px;">Data Aktual</th>
+                                        <th style="padding: 12px;">Prediksi GBDT</th>
+                                        <th style="padding: 12px;">Selisih (Error)</th>
+                                        <th style="padding: 12px;">Status Penjualan</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in hasil %}
+                                    <tr style="border-bottom: 1px solid #eee;">
+                                        <td style="padding: 12px;">{{ row.periode }}</td>
+                                        <td style="padding: 12px; font-weight: bold;">{{ row.aktual }}</td>
+                                        <td style="padding: 12px; font-weight: bold; color: #000;">{{ row.prediksi }}</td>
+                                        <td style="padding: 12px; color: #e74c3c;">{{ row.error }}</td>
+                                        <td style="padding: 12px;">
+                                            <span class="badge-status {% if row.status == 'Tinggi' %}bg-tinggi{% elif row.status == 'Sedang' %}bg-sedang{% else %}bg-rendah{% endif %}">
+                                                {{ row.status }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="bottom-layout">
+                        <div class="chart-box">
+                            <h3 class="box-title"><i class="fa-solid fa-ranking-star"></i> Analisis Faktor Dominan</h3>
+                            <img src="data:image/png;base64,{{ plot_url }}" style="width: 100%; height: auto; border-radius: 8px;">
+                            
+                            {% if importance %}
+                            <div id="teks-rekomendasi" style="margin-top: 15px; padding: 12px 15px; background-color: #f8f9fa; border-left: 4px solid #2ecc71; border-radius: 4px;">
+                                <p style="font-size: 14px; color: #2c3e50; line-height: 1.6; margin: 0;">
+                                    <i class="fa-solid fa-square-poll-horizontal" style="color: #2ecc71; margin-right: 6px;"></i>
+                                    <strong>Kesimpulan Analisis:</strong> Berdasarkan pelatihan model GBDT, faktor yang paling dominan mempengaruhi penjualan <strong>{{ roti_pilihan }}</strong> adalah <strong>{{ importance[0].fitur }}</strong> dengan skor sebesar <strong>{{ importance[0].score }}</strong>. 
+                                    {% if importance|length > 1 %}
+                                    Faktor pengaruh berikutnya diikuti oleh <strong>{{ importance[1].fitur }}</strong> ({{ importance[1].score }}).
+                                    {% endif %}
+                                </p>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="insight-box" id="sistem-pakar">
+                            <h3 class="box-title"><i class="fa-solid fa-lightbulb"></i> Sistem Pakar: Rekomendasi Operasional</h3>
+                            <div style="font-size: 16px; color: #000; line-height: 1.8;">
+                                <p>Berdasarkan evaluasi statistik distribusi historis produk <strong>{{ roti_pilihan }}</strong>:</p>
+                                <ul style="margin: 10px 0; padding-left: 20px;">
+                                    <li>Batas Bawah ($Q_1$): <strong>{{ "{:.2f}".format(q1) }} pcs/periode</strong></li>
+                                    <li>Batas Atas ($Q_3$): <strong>{{ "{:.2f}".format(q3) }} pcs/periode</strong></li>
+                                </ul>
+                                <hr style="border: 0; border-top: 1px solid #eee; margin: 15px 0;">
+                                <p><strong>Tindak Lanjut Keputusan Bisnis:</strong></p>
+                                <ul style="margin: 10px 0; padding-left: 20px;">
+                                    <li style="margin-bottom: 10px;"><strong>Jika Tinggi ( > {{ q3|int }} ) :</strong> Tingkatkan volume produksi.</li>
+                                    <li style="margin-bottom: 10px;"><strong>Jika Sedang :</strong> Pertahankan tingkat produksi saat ini.</li>
+                                    <li><strong>Jika Rendah ( < {{ q1|int }} ) :</strong> Kurangi produksi untuk meminimalisir sisa roti.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div> 
+            {% else %}
+                <div class="prediction-box">
+                    <div class="placeholder-text">
+                        <i class="fa-solid fa-bolt" style="font-size: 50px; color: #ddd; margin-bottom: 15px;"></i><br>
+                        Sistem Siap. Silakan pilih jenis roti dan waktu analisis di atas, lalu klik <b>"Proses Prediksi"</b> untuk melihat hasil peramalan target Anda.
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </main>
+
+    <script>
+        function toggleDateInputs() {
+            var res = document.getElementById("resolusiWaktu").value;
+            var dateDiv = document.getElementById("date-inputs");
+            var start = document.getElementById("startDate");
+            var end = document.getElementById("endDate");
+
+            if (res === 'D') {
+                dateDiv.style.display = "flex";
+                start.required = true;
+                end.required = true;
+            } else {
+                dateDiv.style.display = "none";
+                start.required = false;
+                end.required = false;
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            toggleDateInputs();
+        });
+
+        function togglePerhitungan() {
+            var box = document.getElementById("box-perhitungan");
+            if (box.style.display === "none") {
+                box.style.display = "block";
+                box.scrollIntoView({ behavior: 'smooth' });
+            } else {
+                box.style.display = "none";
+            }
+        }
+
+        function switchTab(tabId, btn) {
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(content => content.style.display = 'none');
+            const buttons = document.querySelectorAll('.tab-btn');
+            buttons.forEach(button => button.classList.remove('active'));
+            document.getElementById(tabId).style.display = 'block';
+            btn.classList.add('active');
+        }
+
+        function generatePDF() {
+            const element = document.getElementById('area-cetak');
+            
+            // 1. Ambil elemen yang ingin disembunyikan / disesuaikan saat cetak
+            const boxPerhitungan = document.getElementById("box-perhitungan");
+            const sistemPakar = document.getElementById("sistem-pakar");
+            const teksRekomendasi = document.getElementById("teks-rekomendasi");
+            const tabelWrapper = document.getElementById("tabel-prediksi-wrapper");
+            
+            // Simpan status asli agar bisa dikembalikan setelah PDF terunduh
+            const originalBoxPerhitungan = boxPerhitungan ? boxPerhitungan.style.display : 'none';
+            
+            // 2. Modifikasi tampilan khusus untuk PDF
+            if (boxPerhitungan) boxPerhitungan.style.display = 'none';
+            if (sistemPakar) sistemPakar.style.display = 'none';
+            if (teksRekomendasi) teksRekomendasi.style.display = 'none';
+            
+            // Menghapus batasan scroll pada tabel agar SEMUA baris tercetak di PDF
+            if (tabelWrapper) {
+                tabelWrapper.style.maxHeight = 'none';
+                tabelWrapper.style.overflowY = 'visible';
+            }
+
+            const options = {
+                margin:       [10, 10],
+                filename:     'Laporan_Analisis_HNBakery_{{ roti_pilihan }}.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            
+            // 3. Proses unduh PDF
+            html2pdf().set(options).from(element).save().then(function() {
+                // 4. Kembalikan semua tampilan web ke keadaan normal secara otomatis
+                if (boxPerhitungan) boxPerhitungan.style.display = originalBoxPerhitungan;
+                if (sistemPakar) sistemPakar.style.display = 'block';
+                if (teksRekomendasi) teksRekomendasi.style.display = 'block';
+                
+                // Kembalikan kotak scroll tabel
+                if (tabelWrapper) {
+                    tabelWrapper.style.maxHeight = '400px';
+                    tabelWrapper.style.overflowY = 'auto';
+                }
+            });
+        }
+    </script>
+</body>
+</html>
