@@ -490,9 +490,9 @@ def init_routes(app):
                 h_m = tree.predict(X_train)
                 
                 log_perhitungan.append({
-                    'iterasi': i + 1, 'f_awal': np.round(F_train[:3], 2).tolist(),
-                    'residual': np.round(residual[:3], 2).tolist(), 'h_m': np.round(h_m[:3], 2).tolist(),
-                    'f_akhir': np.round(F_train[:3] + (learning_rate * h_m[:3]), 2).tolist()
+                    'iterasi': i + 1, 'f_awal': np.round(F_train[:5], 2).tolist(),
+                    'residual': np.round(residual[:5], 2).tolist(), 'h_m': np.round(h_m[:5], 2).tolist(),
+                    'f_akhir': np.round(F_train[:5] + (learning_rate * h_m[:5]), 2).tolist()
                 })
                 F_train += learning_rate * h_m
                 models.append(tree)

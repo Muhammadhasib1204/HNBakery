@@ -3,6 +3,11 @@ import mysql.connector
 
 def get_db_connection():
     try:
+        print("MYSQLHOST =", os.getenv("MYSQLHOST"))
+        print("MYSQLPORT =", os.getenv("MYSQLPORT"))
+        print("MYSQLUSER =", os.getenv("MYSQLUSER"))
+        print("MYSQLDATABASE =", os.getenv("MYSQLDATABASE"))
+
         conn = mysql.connector.connect(
             host=os.getenv("MYSQLHOST"),
             user=os.getenv("MYSQLUSER"),
@@ -12,6 +17,6 @@ def get_db_connection():
         )
         return conn
 
-    except mysql.connector.Error as err:
-        print(err)
+    except Exception as err:
+        print("ERROR:", err)
         return None
